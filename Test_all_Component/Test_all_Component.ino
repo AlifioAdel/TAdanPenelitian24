@@ -16,6 +16,7 @@ const long interval = 5000;        // Interval in milliseconds
 const int numServoMovements = 3;   // Number of times servo moves
 
 unsigned long previousMillis = 0;
+float previousDistance = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -38,11 +39,11 @@ void ultraSound() {
   totalDistance += distance;
   numReadings++;
 
-  Serial.print("Detected Something at ");
-  Serial.print("Distance = ");
   if (distance >= 400 || distance <= 2) {
     Serial.println("Out of range");
   } else {
+    Serial.print("Detected Something at ");
+    Serial.print("Distance = ");
     Serial.print(distance);
     Serial.println(" cm");
   }
