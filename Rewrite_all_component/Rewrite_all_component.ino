@@ -4,22 +4,20 @@ Servo pirServo; // Servo for PIR motion detection (not used in this code)
 Servo ultraServo; // Servo for ultrasonic sensor
 
 #define ultraServoPin 6 // Pin for servo ultrasonik
-
 #define trigPin 10
 #define echoPin 13
 #define pirPin 7
 
 int pos = 0;
 float duration, distance;
-float averageDistance = 0;
-const int numAverageReadings = 3; // Number of readings to average
-const long interval = 3000;        // Interval in milliseconds
-const int numServoMovements = 3;   // Number of times servo moves
+
+const long interval = 1000;      //Interval in milliseconds
+const int numServoMovements = 4; //Number of times servo moves
 
 unsigned long previousMillis = 0;
-float previousDistance = 0; // Initialize previousDistance
+float newDistance, previousDistance = 0; // Initialize previousDistance
 
-bool motionState = false; // We start with no motion detected.
+bool motionDetected = false; // We start with no motion detected.
 
 void setup() {
   Serial.begin(9600);
@@ -38,7 +36,7 @@ void ultraSound() {
   digitalWrite(trigPin, LOW);
 
   duration = pulseIn(echoPin, HIGH);
-  distance = (duration / 2) * 0.0343;
+  newDistance = (duration / 2) * 0.0343;
 }
 
 
@@ -55,36 +53,31 @@ void loop() {
   unsigned long currentMillis = millis();
   int val = digitalRead(pirPin);
 
-  if (val == HIGH) {
+  if (val == HIGH && !motionDetected) {
     digitalWrite(LED_BUILTIN, HIGH); // Turn on the LED.
-    if (motionState == false) {
-      Serial.println("Motion detected!");
-      motionState = true;
-      previousMillis = currentMillis;  // Reset timer on motion detection
-      averageDistance = 0;            // Reset average distance
-    }
-  } else {
+    Serial.println("Motion detected!");
+    motionDetected = true;
+    previousMillis = currentMillis;  // Reset timer on motion detection
+    //averageDistance = 0;            // Reset average distance
+    moveUltraServo();
+  } else if (val == LOW && motionDetected) {
     digitalWrite(LED_BUILTIN, LOW); // Turn off the LED.
-    if (motionState == true) {
-      Serial.println("Motion ended!");
-      motionState = false;
-    }
+    Serial.println("Motion ended!");
+    motionDetected = false;
   }
 
-  if (motionState == true && currentMillis - previousMillis >= interval) {
-    float totalDistance = 0;
-    for (int i = 0; i < numAverageReadings; i++) {
-      ultraSound();
-      totalDistance += distance;
-      delay(10);
-    }
-    averageDistance = totalDistance / numAverageReadings;
+  if (motionDetected) {
+    ultraSound();
+    Serial.print("raw distance: ");
+    Serial.println(newDistance);
 
-    if (abs(averageDistance - previousDistance) >= 5) {
+    if (abs(newDistance - previousDistance) >= 5) {
       Serial.println("Significant distance change detected!");
+      // Serial.print("New distance: ");
+      // Serial.println(newDistance);
       moveUltraServo(); // Call function to move ultra servo
     }
 
-    previousDistance = averageDistance;
+    previousDistance = newDistance;
   }
 }
