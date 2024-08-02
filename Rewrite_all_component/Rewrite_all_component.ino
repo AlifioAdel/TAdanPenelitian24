@@ -14,7 +14,7 @@ float duration, distance;
 const long interval = 1000;      //Interval in milliseconds
 const int numServoMovements = 4; //Number of times servo moves
 
-unsigned long previousMillis = 0;
+// unsigned long previousMillis = 0;
 float newDistance, previousDistance = 0; // Initialize previousDistance
 
 bool motionDetected = false; // We start with no motion detected.
@@ -28,7 +28,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 }
 
-void ultraSound() {
+void UltraSound() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -36,7 +36,8 @@ void ultraSound() {
   digitalWrite(trigPin, LOW);
 
   duration = pulseIn(echoPin, HIGH);
-  newDistance = (duration / 2) * 0.0343;
+  distance = (duration / 2) * 0.0343;
+  delay(1000);
 }
 
 
@@ -50,34 +51,36 @@ void moveUltraServo() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
+  // unsigned long currentMillis = millis();
   int val = digitalRead(pirPin);
 
   if (val == HIGH && !motionDetected) {
     digitalWrite(LED_BUILTIN, HIGH); // Turn on the LED.
     Serial.println("Motion detected!");
     motionDetected = true;
-    previousMillis = currentMillis;  // Reset timer on motion detection
+    //previousMillis = currentMillis;  // Reset timer on motion detection
     //averageDistance = 0;            // Reset average distance
     moveUltraServo();
+    // UltraSound();
   } else if (val == LOW && motionDetected) {
     digitalWrite(LED_BUILTIN, LOW); // Turn off the LED.
     Serial.println("Motion ended!");
     motionDetected = false;
   }
+  
 
   if (motionDetected) {
-    ultraSound();
+    UltraSound();
     Serial.print("raw distance: ");
-    Serial.println(newDistance);
+    Serial.println(distance);
 
-    if (abs(newDistance - previousDistance) >= 5) {
+    if (abs(distance - previousDistance) >= 5) {
       Serial.println("Significant distance change detected!");
       // Serial.print("New distance: ");
       // Serial.println(newDistance);
       moveUltraServo(); // Call function to move ultra servo
     }
 
-    previousDistance = newDistance;
+    previousDistance = distance;
   }
 }
